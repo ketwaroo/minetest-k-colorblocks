@@ -188,19 +188,18 @@ local function showWandGUI(player, pointed_thing)
         k_colorblocks.gui_contexts[playerName] = {}
     end
 
+    k_colorblocks.gui_contexts[playerName].pointed_thing = nil
+    k_colorblocks.gui_contexts[playerName].pointed_node = nil
+
     if
         pointed_thing
         and "node" == pointed_thing.type
         and pointed_thing.under
     then
         local pointed_node = minetest.get_node(pointed_thing.under)
-
         if pointed_node and nil ~= k_colorblocks.nodes[pointed_node.name] then
             k_colorblocks.gui_contexts[playerName].pointed_thing = pointed_thing
             k_colorblocks.gui_contexts[playerName].pointed_node = pointed_node
-        else
-            k_colorblocks.gui_contexts[playerName].pointed_thing = nil
-            k_colorblocks.gui_contexts[playerName].pointed_node = nil
         end
     end
 
