@@ -226,26 +226,30 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
     end
 end)
 
+local dblclkTime = 0
 minetest.register_on_player_receive_fields(function(player, formname, fields)
-    -- print(dump(formname) .. dump(fields))
+    --print(dump(formname) .. dump(fields))
     if "k_colorblocks_selector" ~= formname then
         return
     end
 
     local playerName = player and player:get_player_name() or nil
 
-
     if playerName and fields.k_col then
         k_colorblocks.gui_contexts[playerName].selected_col = tonumber(fields.k_col)
         refreshWandGui(player)
+
+        local newDblclkTime = tonumber(minetest.get_us_time())
+        -- registers a "double click" on a color
+        if 333333 > (newDblclkTime - dblclkTime) then
+            fields.ok = 1
+            minetest.close_formspec(playerName, "k_colorblocks_selector")
+        end
+        dblclkTime = newDblclkTime
     end
 
     if fields.ok and k_colorblocks.gui_contexts[playerName].selected_col then
         k_colorblocks.gui_contexts[playerName].current_col = k_colorblocks.gui_contexts[playerName].selected_col
-    end
-
-    if fields.cancel or fields.quit then
-        k_colorblocks.gui_contexts[playerName].pointed_thing = nil
     end
 end)
 
@@ -270,16 +274,16 @@ minetest.register_tool("k_colorblocks:wand", {
     },
     _mcl_toollike_wield = true,
     -- so that it can't actually dig anything
-	_mcl_diggroups = {
-		handy = { speed = 0, level = 0, uses = 0 },
-		hoey = { speed = 0, level = 0, uses = 0 },
-		pickaxey = { speed = 0, level = 0, uses = 0 },
-		shovely = { speed = 0, level = 0, uses = 0 },
-		axey = { speed = 0, level = 0, uses = 0 },
-		swordy = { speed = 0, level = 0, uses = 0 },
-		swordy_cobweb = { speed = 0, level = 0, uses = 0 },
-		shearsy_cobweb = { speed = 0, level = 0, uses = 0 }
-	},
+    _mcl_diggroups = {
+        handy = { speed = 0, level = 0, uses = 0 },
+        hoey = { speed = 0, level = 0, uses = 0 },
+        pickaxey = { speed = 0, level = 0, uses = 0 },
+        shovely = { speed = 0, level = 0, uses = 0 },
+        axey = { speed = 0, level = 0, uses = 0 },
+        swordy = { speed = 0, level = 0, uses = 0 },
+        swordy_cobweb = { speed = 0, level = 0, uses = 0 },
+        shearsy_cobweb = { speed = 0, level = 0, uses = 0 }
+    },
     -- on_use = function(stack, player, pt)
     --     apply_color(player, pt)
     --     return stack
