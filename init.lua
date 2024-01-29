@@ -263,7 +263,7 @@ minetest.register_tool("k_colorblocks:wand", {
     inventory_image = "k_colorblocks_wand.png",
     -- keep it to creative mode srsly
     -- tbd: range might not be working as expected sometimes?
-    range = 40,
+    range = 200,
     wield_scale = { x = 1.5, y = 1.5, z = 1.5, },
     groups = { tool = 1, fire_immune = 1 },
     liquids_pointable = false,
