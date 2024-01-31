@@ -15,7 +15,7 @@ Currently supports only one palette with 15 grey values and 240 color values spl
 
 This is NOT a replacement for unifieddyes or the built in dye system. For example you cannot dye wool with this mod (for now). Only predefined blocks with the `k_colorblocks` group and specific palette file can be stained.
 
-### Features and Usage
+## Features and Usage
 
 Requires creative mode to be able to access the Colouring Wand and blocks.
 
@@ -30,6 +30,8 @@ Place stainable blocks in whatever configuration you fancy, right click with the
 
 Stained blocks retain their tint when you dig them again so you can prepare a swatch of colored blocks before hand and then build your imagination without having to tweak color each time.
 
-### Other notes:
+## Other notes:
 
-The textures for the quarts block were lifted from mineclonia (which is using pixelperfection texture pack) so the media license for this mod is also `CC-BY-SA-4.0`
+### Media License
+
+The textures for the quartz block were lifted from mineclonia (which is using pixelperfection texture pack) so the media license for textures in this mod is also [`CC-BY-SA-4.0`](http://creativecommons.org/licenses/by-sa/4.0/)
