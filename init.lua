@@ -170,18 +170,17 @@ k_colorblocks = {
         local playerName                     = player and player:get_player_name() or nil
         local pn                             = playerName and self.gui_contexts[playerName] and self.gui_contexts[playerName].pointed_node or nil
 
-
         -- @todo refactor bottom tiles
         if pn and nil ~= pn.param2 then
             local texture = self.palettes.full.image .. "^[sheet:256x1:" .. pn.param2 .. ",0"
 
             formspec = formspec
-                .. "label[0.2," .. (endtop + 0.2) .. ";" .. S("Pointed") .. "]"
-                .. "label[0.2," .. (endtop + 0.4) .. ";" .. S("Block") .. "]"
-                .. "label[0.2," .. (endtop + 0.6) .. ";" .. S("Color") .. "]"
+                .. "label[0.4," .. (endtop + 0.2) .. ";" .. S("Pointed") .. "]"
+                .. "label[0.4," .. (endtop + 0.4) .. ";" .. S("Block") .. "]"
+                .. "label[0.4," .. (endtop + 0.6) .. ";" .. S("Color") .. "]"
                 .. string.format(
                     "image_button[%.4f,%.4f;0.5,0.5;%s;k_col;%d;false;false]",
-                    1.0,
+                    1.4,
                     (endtop + 0.1),
                     F(texture),
                     pn.param2
@@ -192,11 +191,11 @@ k_colorblocks = {
             local texture = self.palettes.full.image .. "^[sheet:256x1:" .. self.gui_contexts[playerName].current_col .. ",0"
 
             formspec = formspec
-                .. "label[1.5," .. (endtop + 0.3) .. ";" .. S("Current") .. "]"
-                .. "label[1.5," .. (endtop + 0.5) .. ";" .. S("Color") .. "]"
+                .. "label[2.3," .. (endtop + 0.3) .. ";" .. S("Current") .. "]"
+                .. "label[2.3," .. (endtop + 0.5) .. ";" .. S("Color") .. "]"
                 .. string.format(
                     "image_button[%.4f,%.4f;0.5,0.5;%s;k_col;%d;false;false]",
-                    2.3,
+                    3.0,
                     (endtop + 0.1),
                     F(texture),
                     self.gui_contexts[playerName].current_col
@@ -207,11 +206,11 @@ k_colorblocks = {
             local texture = self.palettes.full.image .. "^[sheet:256x1:" .. self.gui_contexts[playerName].current_col_aux .. ",0"
 
             formspec = formspec
-                .. "label[2.8," .. (endtop + 0.3) .. ";" .. S("Aux") .. "]"
-                .. "label[2.8," .. (endtop + 0.5) .. ";" .. S("Color") .. "]"
+                .. "label[3.9," .. (endtop + 0.3) .. ";" .. S("Aux") .. "]"
+                .. "label[3.9," .. (endtop + 0.5) .. ";" .. S("Color") .. "]"
                 .. string.format(
                     "image_button[%.4f,%.4f;0.5,0.5;%s;k_col;%d;false;false]",
-                    3.4,
+                    4.6,
                     (endtop + 0.1),
                     F(texture),
                     self.gui_contexts[playerName].current_col_aux
@@ -226,62 +225,6 @@ k_colorblocks = {
         end
     end,
 }
-
--- cache nodes with the group
-minetest.register_on_mods_loaded(function()
-    local mclEnabled = minetest.settings:get_bool("k_colorblocks.allow_mineclonia", false)
-
-    -- mapping of paramtype2 -> [new paramtype2, palette]
-    local paramtypemap = {
-        none = { "color", k_colorblocks.palettes.full.image },
-        color = { "color", k_colorblocks.palettes.full.image },
-        -- @todo below needs some work...
-        -- degrotate = { "colordegrotate", k_colorblocks.palettes.full.image},
-        -- facedir = { "colorfacedir", k_colorblocks.palettes.full.image }, -- could use `color4dir` for more colours
-        --color4dir = { "color4dir", k_colorblocks.palettes.full.image },
-        -- wallmounted = { "colorwallmounted", k_colorblocks.palettes.full.image },
-    }
-
-    for key, def in pairs(minetest.registered_nodes) do
-        if def.groups.k_colorblocks then
-            k_colorblocks:cacheNode(key)
-        end
-
-        if
-            mclEnabled
-            and (
-                def.groups.concrete
-                or def.groups.concrete_powder
-                or string.find(key, "mcl_stairs:slab_concrete_")
-                --or string.find(key, "mcl_stairs:stair_concrete_") -- rotation issues.
-                or def.groups.wool
-                or def.groups.carpet
-                or def.groups.glass                      -- because stained glass. seems to work even with connected glass. not with paramtype2 = "glasslikeliquidlevel"
-                or string.find(key, "mcl_light_blocks:") -- the kids like light blocks
-                or def.groups.hardened_clay
-                or def.groups.glazed_terracotta          -- make patterns pop
-                or def.groups.snow_cover                 -- needs testing in snowy weather.
-                or def.groups.snow_top
-                or def.groups.ice                        -- ice castles
-            )
-        then
-            if paramtypemap[def.paramtype2] and (nil == def.param2 or 0 == def.param2) then
-                local newparamtype2 = paramtypemap[def.paramtype2][1] or def.paramtype2
-                local newpalette = paramtypemap[def.paramtype2][2] or def.palette
-
-                def.groups.k_colorblocks = 1
-
-                local overrides = {
-                    paramtype2 = newparamtype2,
-                    palette    = newpalette,
-                    group      = def.groups,
-                }
-                minetest.override_item(key, overrides)
-                k_colorblocks:cacheNode(key)
-            end
-        end
-    end
-end)
 
 -- use this way to allow press and hold application.
 -- may have a performance impact
@@ -312,7 +255,7 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
     end
 end)
 
-local dblclkTime = tonumber(minetest.get_us_time())
+local dblclkTime = tonumber(0)
 minetest.register_on_player_receive_fields(function(player, formname, fields)
     if "k_colorblocks_selector" ~= formname then
         return
@@ -343,8 +286,6 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
         if fields.ok_aux then
             k_colorblocks.gui_contexts[playerName].current_col_aux = k_colorblocks.gui_contexts[playerName].selected_col
         end
-        -- clear selection outside of actual selection time
-        --k_colorblocks.gui_contexts[playerName].selected_col = nil
     end
 end)
 
@@ -359,6 +300,7 @@ minetest.register_tool("k_colorblocks:wand", {
     -- keep it to creative mode srsly
     -- tbd: range might not be working as expected sometimes?
     range = 200,
+    light_level=14,
     wield_scale = { x = 1.0, y = 1.0, z = 1.0, },
     groups = { tool = 1, fire_immune = 1 },
     liquids_pointable = false,
@@ -379,10 +321,6 @@ minetest.register_tool("k_colorblocks:wand", {
         swordy_cobweb = { speed = 0, level = 0, uses = 0 },
         shearsy_cobweb = { speed = 0, level = 0, uses = 0 }
     },
-    -- on_use = function(stack, player, pt)
-    --     apply_color(player, pt)
-    --     return stack
-    -- end,
     on_place = function(stack, player, pt)
         k_colorblocks:showWandGUI(player, pt)
     end,
