@@ -1,18 +1,225 @@
 local S = minetest.get_translator(minetest.get_current_modname())
 local F = minetest.formspec_escape
 
-local quartzGlow = 11
-local defaultHardness = 5
-local defaultBlastResistance = 100
-
 k_colorblocks = {
+    palettes = {
+        full = {
+            image = "k_colorblocks_palette_color_full.png",
+            formspec = function(self, player)
+                local primary = {
+                    "Reds",
+                    "Greens",
+                    "Blues",
+                }
+                -- colour names were lifted off wikipedia
+                local colours = {
+                    "Red",
+                    "Orange",
+                    "Yellow",
+                    "Chartreuse",
+                    "Green",
+                    "Spring green",
+                    "Cyan",
+                    "Azure",
+                    "Blue",
+                    "Violet",
+                    "Magenta",
+                    "Rose",
+                }
 
+                local grids = {
+                    -- grey
+                    { top = 0.8, left = 0.4, istart = 0, iend = 14, w = 15, label = "Greyscale", },
+                }
+
+                -- texture index pointer for rest of palette
+                local idx = 15
+
+                for p = 1, #primary, 1 do
+                    local colstart = 1 + ((p - 1) * 4)
+                    local colend = colstart + 3
+
+                    for c = colstart, colend, 1 do
+                        local row = (c - 1) % 4
+                        table.insert(grids, { top = 1.55 + (2.25 * row), left = 0.4 + ((p - 1) * 2.75), istart = idx, iend = (idx + 19), w = 5, label = colours[c] })
+                        idx = idx + 20
+                    end
+                end
+                local formspecParts = {}
+                local endleft = 0
+                local endtop = 0
+                for i = 1, #grids, 1 do
+                    local formspec, eleft, etop = k_colorblocks:buildColorGrid(grids[i].left, grids[i].top, self.image, grids[i].istart, grids[i].iend, grids[i].w, player)
+                    endleft = eleft
+                    endtop = etop
+                    table.insert(formspecParts, formspec)
+                    -- add labels on top
+                    table.insert(formspecParts, "label[" .. (grids[i].left) .. "," .. (grids[i].top - 0.1) .. ";" .. F(S(grids[i].label)) .. "]")
+                end
+                -- 255 is transparent for no reason
+                local formspec, _, _ = k_colorblocks:buildColorGrid(grids[1].left + (grids[1].w * 0.5), grids[1].top, self.image, 255, 255, 1, player)
+                table.insert(formspecParts, formspec)
+
+
+                return table.concat(formspecParts), endleft, endtop
+            end,
+        },
+        grey = {
+            image = "k_colorblocks_palette_grey_full.png",
+            formspec = function(self, player)
+                local formspec, eleft, etop = k_colorblocks:buildColorGrid(0.8, 0.4, self.image, 0, 255, 16, player)
+                formspec = formspec .. "label[0.4,0.7;" .. F(S("Greyscale")) .. "]"
+            end,
+        }
+    },
     -- map of nodes we can apply colours to for quicker lookup.
     nodes = {},
     -- per player gui context
     gui_contexts = {
 
     },
+    -- @param offsetLeft    x offset in form
+    -- @param offsetTop     y offset in form
+    -- @param palette     texture which is a single line of color
+    -- @param startIdx    zero index start position on palette
+    -- @param endIdx    zero index end position on palette
+    -- @param width    width of grid
+    buildColorGrid = function(self, offsetLeft, offsetTop, palette, startIdx, endIdx, width, player)
+        local parts = {}
+        local offsetEndLeft = offsetLeft
+        local offsetEndTop = offsetTop
+
+        local playerName = player and player:get_player_name() or nil
+
+        local selectedCol = playerName and self.gui_contexts[playerName] and self.gui_contexts[playerName].selected_col or nil
+        local currentCol = playerName and self.gui_contexts[playerName] and self.gui_contexts[playerName].current_col or nil
+        local currentColAux = playerName and self.gui_contexts[playerName] and self.gui_contexts[playerName].current_col_aux or nil
+
+        --image_button[<X>,<Y>;<W>,<H>;<texture name>;<name>;<label>]
+
+        for idx = startIdx, endIdx, 1 do
+            local localIdx = idx - startIdx
+            local left = (math.floor(localIdx % width) * 0.5) + offsetLeft
+            local top = (math.floor(localIdx / width) * 0.5) + offsetTop
+
+            local texture = palette .. "^[sheet:256x1:" .. idx .. ",0"
+
+            if selectedCol and selectedCol == idx then
+                texture = "(" .. texture .. ")^k_colorblocks_selected_gui.png"
+            end
+            if currentCol and currentCol == idx then
+                texture = "(" .. texture .. ")^k_colorblocks_selected_wand.png"
+            end
+            if currentColAux and currentColAux == idx then
+                texture = "(" .. texture .. ")^k_colorblocks_selected_wand_aux.png"
+            end
+
+            table.insert(parts, string.format(
+                "image_button[%.4f,%.4f;0.5,0.5;%s;k_col;%d;false;false]",
+                left,
+                top,
+                F(texture),
+                idx
+            ))
+            offsetEndLeft = left + 0.5
+            offsetEndTop = top + 0.5
+        end
+
+        return table.concat(parts, ""), offsetEndLeft, offsetEndTop
+    end,
+    showWandGUI = function(self, player, pointed_thing)
+        local playerName = player and player:get_player_name() or ""
+
+        if "" == playerName then
+            return
+        end
+
+        if nil == self.gui_contexts[playerName] then
+            self.gui_contexts[playerName] = {}
+        end
+
+        self.gui_contexts[playerName].pointed_thing = nil
+        self.gui_contexts[playerName].pointed_node = nil
+
+        if
+            pointed_thing
+            and "node" == pointed_thing.type
+            and pointed_thing.under
+        then
+            local pointed_node = minetest.get_node(pointed_thing.under)
+            if pointed_node and nil ~= self.nodes[pointed_node.name] then
+                self.gui_contexts[playerName].pointed_thing = pointed_thing
+                self.gui_contexts[playerName].pointed_node = pointed_node
+            end
+        end
+
+        self:refreshWandGui(player)
+    end,
+    refreshWandGui = function(self, player)
+        local formspecgrids, endleft, endtop = self.palettes.full:formspec(player)
+
+        local formspec                       = "size[" .. (endleft + 0.4) .. "," .. (endtop + 0.9) .. "]"
+            .. "padding[0,0]"
+            .. "real_coordinates[true]"
+            .. "label[0.3,0.3;" .. F(S("K Color Picker")) .. "]"
+            .. formspecgrids
+            .. "button_exit[" .. (endleft - 2.0) .. "," .. (endtop + 0.1) .. ";0.7,0.6;ok_aux;" .. F(S("Aux")) .. "]"
+            .. "button_exit[" .. (endleft - 1.3) .. "," .. (endtop + 0.1) .. ";0.7,0.6;ok;" .. F(S("OK")) .. "]"
+            .. "button_exit[" .. (endleft - 0.6) .. "," .. (endtop + 0.1) .. ";0.9,0.6;cancel;" .. F(S("Cancel")) .. "]"
+
+        local playerName                     = player and player:get_player_name() or nil
+        local pn                             = playerName and self.gui_contexts[playerName] and self.gui_contexts[playerName].pointed_node or nil
+
+
+        -- @todo refactor bottom tiles
+        if pn and nil ~= pn.param2 then
+            local texture = self.palettes.full.image .. "^[sheet:256x1:" .. pn.param2 .. ",0"
+
+            formspec = formspec
+                .. "label[0.2," .. (endtop + 0.2) .. ";" .. S("Pointed") .. "]"
+                .. "label[0.2," .. (endtop + 0.4) .. ";" .. S("Block") .. "]"
+                .. "label[0.2," .. (endtop + 0.6) .. ";" .. S("Color") .. "]"
+                .. string.format(
+                    "image_button[%.4f,%.4f;0.5,0.5;%s;k_col;%d;false;false]",
+                    1.0,
+                    (endtop + 0.1),
+                    F(texture),
+                    pn.param2
+                )
+        end
+
+        if nil ~= self.gui_contexts[playerName].current_col then
+            local texture = self.palettes.full.image .. "^[sheet:256x1:" .. self.gui_contexts[playerName].current_col .. ",0"
+
+            formspec = formspec
+                .. "label[1.5," .. (endtop + 0.3) .. ";" .. S("Current") .. "]"
+                .. "label[1.5," .. (endtop + 0.5) .. ";" .. S("Color") .. "]"
+                .. string.format(
+                    "image_button[%.4f,%.4f;0.5,0.5;%s;k_col;%d;false;false]",
+                    2.3,
+                    (endtop + 0.1),
+                    F(texture),
+                    self.gui_contexts[playerName].current_col
+                )
+        end
+
+        if nil ~= self.gui_contexts[playerName].current_col_aux then
+            local texture = self.palettes.full.image .. "^[sheet:256x1:" .. self.gui_contexts[playerName].current_col_aux .. ",0"
+
+            formspec = formspec
+                .. "label[2.8," .. (endtop + 0.3) .. ";" .. S("Aux") .. "]"
+                .. "label[2.8," .. (endtop + 0.5) .. ";" .. S("Color") .. "]"
+                .. string.format(
+                    "image_button[%.4f,%.4f;0.5,0.5;%s;k_col;%d;false;false]",
+                    3.4,
+                    (endtop + 0.1),
+                    F(texture),
+                    self.gui_contexts[playerName].current_col_aux
+                )
+        end
+
+        minetest.show_formspec(player:get_player_name(), "k_colorblocks_selector", formspec)
+    end,
     cacheNode = function(self, nodename)
         if "string" == type(nodename) then
             self.nodes[nodename] = 1
@@ -22,221 +229,102 @@ k_colorblocks = {
 
 -- cache nodes with the group
 minetest.register_on_mods_loaded(function()
-    for nodename, def in pairs(minetest.registered_nodes) do
+    local mclEnabled = minetest.settings:get_bool("k_colorblocks.allow_mineclonia", false)
+
+    -- mapping of paramtype2 -> [new paramtype2, palette]
+    local paramtypemap = {
+        none = { "color", k_colorblocks.palettes.full.image },
+        color = { "color", k_colorblocks.palettes.full.image },
+        -- @todo below needs some work...
+        -- degrotate = { "colordegrotate", k_colorblocks.palettes.full.image},
+        -- facedir = { "colorfacedir", k_colorblocks.palettes.full.image }, -- could use `color4dir` for more colours
+        --color4dir = { "color4dir", k_colorblocks.palettes.full.image },
+        -- wallmounted = { "colorwallmounted", k_colorblocks.palettes.full.image },
+    }
+
+    for key, def in pairs(minetest.registered_nodes) do
         if def.groups.k_colorblocks then
-            k_colorblocks:cacheNode(nodename)
+            k_colorblocks:cacheNode(key)
+        end
+
+        if
+            mclEnabled
+            and (
+                def.groups.concrete
+                or def.groups.concrete_powder
+                or string.find(key, "mcl_stairs:slab_concrete_")
+                --or string.find(key, "mcl_stairs:stair_concrete_") -- rotation issues.
+                or def.groups.wool
+                or def.groups.carpet
+                or def.groups.glass                      -- because stained glass. seems to work even with connected glass. not with paramtype2 = "glasslikeliquidlevel"
+                or string.find(key, "mcl_light_blocks:") -- the kids like light blocks
+                or def.groups.hardened_clay
+                or def.groups.glazed_terracotta          -- make patterns pop
+                or def.groups.snow_cover                 -- needs testing in snowy weather.
+                or def.groups.snow_top
+                or def.groups.ice                        -- ice castles
+            )
+        then
+            if paramtypemap[def.paramtype2] and (nil == def.param2 or 0 == def.param2) then
+                local newparamtype2 = paramtypemap[def.paramtype2][1] or def.paramtype2
+                local newpalette = paramtypemap[def.paramtype2][2] or def.palette
+
+                def.groups.k_colorblocks = 1
+
+                local overrides = {
+                    paramtype2 = newparamtype2,
+                    palette    = newpalette,
+                    group      = def.groups,
+                }
+                minetest.override_item(key, overrides)
+                k_colorblocks:cacheNode(key)
+            end
         end
     end
 end)
-
--- @param offsetLeft    x offset in form
--- @param offsetTop     y offset in form
--- @param palette     texture which is a single line of color
--- @param startIdx    zero index start position on palette
--- @param endIdx    zero index end position on palette
--- @param width    width of grid
-local function buildColorGrid(offsetLeft, offsetTop, palette, startIdx, endIdx, width, player)
-    local parts = {}
-    local offsetEndLeft = offsetLeft
-    local offsetEndTop = offsetTop
-
-    local playerName = player and player:get_player_name() or nil
-    local currentCol = playerName and k_colorblocks.gui_contexts[playerName] and k_colorblocks.gui_contexts[playerName].current_col or nil
-    local selectedCol = playerName and k_colorblocks.gui_contexts[playerName] and k_colorblocks.gui_contexts[playerName].selected_col or nil
-
-    --image_button[<X>,<Y>;<W>,<H>;<texture name>;<name>;<label>]
-
-    for idx = startIdx, endIdx, 1 do
-        local localIdx = idx - startIdx
-        local left = (math.floor(localIdx % width) * 0.5) + offsetLeft
-        local top = (math.floor(localIdx / width) * 0.5) + offsetTop
-
-        local texture = palette .. "^[sheet:256x1:" .. idx .. ",0"
-        if currentCol and currentCol == idx then
-            texture = "(" .. texture .. ")^k_colorblocks_selected_wand.png"
-        end
-        if selectedCol and selectedCol == idx then
-            texture = "(" .. texture .. ")^k_colorblocks_selected_gui.png"
-        end
-
-        table.insert(parts, string.format(
-            "image_button[%.4f,%.4f;0.5,0.5;%s;k_col;%d;false;false]",
-            left,
-            top,
-            F(texture),
-            idx
-        ))
-        offsetEndLeft = left + 0.5
-        offsetEndTop = top + 0.5
-    end
-
-    return table.concat(parts, ""), offsetEndLeft, offsetEndTop
-end
-
-local palettes = {
-    full = {
-        image = "k_colorblocks_palette_color_full.png",
-        formspec = function(self, player)
-            local primary = {
-                "Reds",
-                "Greens",
-                "Blues",
-            }
-            -- colour names were lifted off wikipedia
-            local colours = {
-                "Red",
-                "Orange",
-                "Yellow",
-                "Chartreuse",
-                "Green",
-                "Spring green",
-                "Cyan",
-                "Azure",
-                "Blue",
-                "Violet",
-                "Magenta",
-                "Rose",
-            }
-
-            local grids = {
-                -- grey
-                { top = 0.8, left = 0.4, istart = 0, iend = 14, w = 15, label = "Greyscale", },
-            }
-
-            -- texture index pointer for rest of palette
-            local idx = 15
-
-            for p = 1, #primary, 1 do
-                local colstart = 1 + ((p - 1) * 4)
-                local colend = colstart + 3
-
-                for c = colstart, colend, 1 do
-                    local row = (c - 1) % 4
-                    table.insert(grids, { top = 1.55 + (2.25 * row), left = 0.4 + ((p - 1) * 2.75), istart = idx, iend = (idx + 19), w = 5, label = colours[c] })
-                    idx = idx + 20
-                end
-            end
-            local formspecParts = {}
-            local endleft = 0
-            local endtop = 0
-            for i = 1, #grids, 1 do
-                local formspec, eleft, etop = buildColorGrid(grids[i].left, grids[i].top, self.image, grids[i].istart, grids[i].iend, grids[i].w, player)
-                endleft = eleft
-                endtop = etop
-                table.insert(formspecParts, formspec)
-                -- add labels on top
-                table.insert(formspecParts, "label[" .. (grids[i].left) .. "," .. (grids[i].top - 0.1) .. ";" .. F(S(grids[i].label)) .. "]")
-            end
-            -- 255 is transparent for no reason
-            local formspec, _, _ = buildColorGrid(grids[1].left + (grids[1].w * 0.5), grids[1].top, self.image, 255, 255, 1, player)
-            table.insert(formspecParts, formspec)
-
-
-            return table.concat(formspecParts), endleft, endtop
-        end,
-    },
-    grey = {
-        image = "k_colorblocks_palette_grey_full.png",
-        formspec = function(self, player)
-            local formspec, eleft, etop = buildColorGrid(0.8, 0.4, self.image, 0, 255, 16, player)
-            formspec = formspec .. "label[0.4,0.7;" .. F(S("Greyscale")) .. "]"
-        end,
-    }
-}
-
-local function refreshWandGui(player)
-    local formspecgrids, endleft, endtop = palettes.full:formspec(player)
-
-    local formspec                       = "size[" .. (endleft + 0.4) .. "," .. (endtop + 0.9) .. "]"
-        .. "padding[0,0]"
-        .. "real_coordinates[true]"
-        .. "label[0.3,0.3;" .. F(S("K Color Picker")) .. "]"
-        .. formspecgrids
-        .. "button_exit[" .. (endleft - 2) .. "," .. (endtop + 0.1) .. ";0.75,0.5;ok;" .. F(S("OK")) .. "]"
-        .. "button_exit[" .. (endleft - 1) .. "," .. (endtop + 0.1) .. ";0.75,0.5;cancel;" .. F(S("Cancel")) .. "]"
-
-    local playerName                     = player and player:get_player_name() or nil
-    local pn                             = playerName and k_colorblocks.gui_contexts[playerName] and k_colorblocks.gui_contexts[playerName].pointed_node or nil
-
-    if pn and nil ~= pn.param2 then
-        local texture = palettes.full.image .. "^[sheet:256x1:" .. pn.param2 .. ",0"
-
-        formspec = formspec
-            .. "label[0.5," .. (endtop + 0.2) .. ";" .. S("Pointed") .. "]"
-            .. "label[0.5," .. (endtop + 0.4) .. ";" .. S("Block") .. "]"
-            .. "label[0.5," .. (endtop + 0.6) .. ";" .. S("Color") .. "]"
-            .. string.format(
-                "image_button[%.4f,%.4f;0.5,0.5;%s;k_col;%d;false;false]",
-                1.5,
-                (endtop + 0.1),
-                F(texture),
-                pn.param2
-            )
-    end
-
-    minetest.show_formspec(player:get_player_name(), "k_colorblocks_selector", formspec)
-end
-
-local function showWandGUI(player, pointed_thing)
-    local playerName = player and player:get_player_name() or ""
-
-    if "" == playerName then
-        return
-    end
-
-    if nil == k_colorblocks.gui_contexts[playerName] then
-        k_colorblocks.gui_contexts[playerName] = {}
-    end
-
-    k_colorblocks.gui_contexts[playerName].pointed_thing = nil
-    k_colorblocks.gui_contexts[playerName].pointed_node = nil
-
-    if
-        pointed_thing
-        and "node" == pointed_thing.type
-        and pointed_thing.under
-    then
-        local pointed_node = minetest.get_node(pointed_thing.under)
-        if pointed_node and nil ~= k_colorblocks.nodes[pointed_node.name] then
-            k_colorblocks.gui_contexts[playerName].pointed_thing = pointed_thing
-            k_colorblocks.gui_contexts[playerName].pointed_node = pointed_node
-        end
-    end
-
-    refreshWandGui(player)
-end
 
 -- use this way to allow press and hold application.
 -- may have a performance impact
 minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
     local playerName = puncher and puncher:get_player_name() or ""
+
     if
+    -- @todo simplify these checks
         "" ~= playerName
         and nil ~= k_colorblocks.nodes[node.name]
-        and "k_colorblocks:wand" == puncher:get_wielded_item():get_name()
         and nil ~= k_colorblocks.gui_contexts[playerName]
-        and nil ~= k_colorblocks.gui_contexts[playerName].current_col
+        and (
+            nil ~= k_colorblocks.gui_contexts[playerName].current_col
+            or nil ~= k_colorblocks.gui_contexts[playerName].current_col_aux
+        )
+        and "k_colorblocks:wand" == puncher:get_wielded_item():get_name()
     then
-        -- print(dump(pos) .. dump(node))
-        node.param2 = k_colorblocks.gui_contexts[playerName].current_col
+        local pc = puncher:get_player_control()
+        if pc.aux1 and nil ~= k_colorblocks.gui_contexts[playerName].current_col_aux then
+            node.param2 = k_colorblocks.gui_contexts[playerName].current_col_aux
+        elseif nil ~= k_colorblocks.gui_contexts[playerName].current_col then
+            node.param2 = k_colorblocks.gui_contexts[playerName].current_col
+        end
+
         minetest.set_node(pos, node)
         --local meta = minetest.get_meta(pos)
         --meta:set_int("k_colorblocks_col", node.param2)
     end
 end)
 
-local dblclkTime = 0
+local dblclkTime = tonumber(minetest.get_us_time())
 minetest.register_on_player_receive_fields(function(player, formname, fields)
-    --print(dump(formname) .. dump(fields))
     if "k_colorblocks_selector" ~= formname then
         return
     end
 
     local playerName = player and player:get_player_name() or nil
+    local selected = 0
 
-    if playerName and fields.k_col then
-        k_colorblocks.gui_contexts[playerName].selected_col = tonumber(fields.k_col)
-        refreshWandGui(player)
+    if playerName and nil ~= fields.k_col then
+        selected = tonumber(fields.k_col)
+        k_colorblocks.gui_contexts[playerName].selected_col = selected
+        k_colorblocks:refreshWandGui(player)
 
         local newDblclkTime = tonumber(minetest.get_us_time())
         -- registers a "double click" on a color
@@ -247,8 +335,16 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
         dblclkTime = newDblclkTime
     end
 
-    if fields.ok and k_colorblocks.gui_contexts[playerName].selected_col then
-        k_colorblocks.gui_contexts[playerName].current_col = k_colorblocks.gui_contexts[playerName].selected_col
+    if k_colorblocks.gui_contexts[playerName].selected_col then
+        if fields.ok then
+            k_colorblocks.gui_contexts[playerName].current_col = k_colorblocks.gui_contexts[playerName].selected_col
+        end
+
+        if fields.ok_aux then
+            k_colorblocks.gui_contexts[playerName].current_col_aux = k_colorblocks.gui_contexts[playerName].selected_col
+        end
+        -- clear selection outside of actual selection time
+        --k_colorblocks.gui_contexts[playerName].selected_col = nil
     end
 end)
 
@@ -263,7 +359,7 @@ minetest.register_tool("k_colorblocks:wand", {
     -- keep it to creative mode srsly
     -- tbd: range might not be working as expected sometimes?
     range = 200,
-    wield_scale = { x = 1.5, y = 1.5, z = 1.5, },
+    wield_scale = { x = 1.0, y = 1.0, z = 1.0, },
     groups = { tool = 1, fire_immune = 1 },
     liquids_pointable = false,
     tool_capabilities = {
@@ -288,81 +384,13 @@ minetest.register_tool("k_colorblocks:wand", {
     --     return stack
     -- end,
     on_place = function(stack, player, pt)
-        showWandGUI(player, pt)
+        k_colorblocks:showWandGUI(player, pt)
     end,
     on_secondary_use = function(stack, player, pt)
-        showWandGUI(player, pt)
+        k_colorblocks:showWandGUI(player, pt)
     end,
 })
 
--- at least one sound where possible.
-local defaultNodeSound = {}
 
-if minetest.get_modpath("default") then
-    defaultNodeSound = default.node_sound_stone_defaults()
-elseif minetest.get_modpath("mcl_sounds") then
-    defaultNodeSound = mcl_sounds.node_sound_stone_defaults()
-end
-
-
-minetest.register_node("k_colorblocks:quartz_glow_block", {
-    description = S("Stainable Glowing Block of Quartz"),
-    is_ground_content = false,
-    tiles = { "k_colorblocks_quartz_block_top.png", "k_colorblocks_quartz_block_top.png", "k_colorblocks_quartz_block_side.png" },
-    groups = { pickaxey = 1, quartz_block = 1, building_block = 1, material_stone = 1, stonecuttable = 1, k_colorblocks = 1 },
-    sounds = defaultNodeSound,
-    light_source = quartzGlow,
-    paramtype2 = "color",
-    palette = palettes.full.image,
-    _mcl_blast_resistance = defaultBlastResistance,
-    _mcl_hardness = defaultHardness,
-
-})
-minetest.register_node("k_colorblocks:quartz_block", {
-    description = S("Stainable Block of Quartz"),
-    is_ground_content = false,
-    tiles = { "k_colorblocks_quartz_block_top.png", "k_colorblocks_quartz_block_top.png", "k_colorblocks_quartz_block_side.png" },
-    groups = { pickaxey = 1, quartz_block = 1, building_block = 1, material_stone = 1, stonecuttable = 1, k_colorblocks = 1 },
-    sounds = defaultNodeSound,
-    paramtype2 = "color",
-    palette = palettes.full.image,
-    _mcl_blast_resistance = defaultBlastResistance,
-    _mcl_hardness = defaultHardness,
-
-})
-
--- plain blocks
-local plainblocks = {}
-
-table.insert(plainblocks, "white")
-for i = 0, 345, 15 do
-    table.insert(plainblocks, "hue_" .. i)
-end
-
-for i = 1, #plainblocks, 1 do
-    local label = plainblocks[i]
-    minetest.register_node("k_colorblocks:block_plain_glow_" .. label, {
-        description = S("Stainable Plain Glowing Block " .. label),
-        is_ground_content = false,
-        tiles = { "k_colorblocks_node_plain_tiles.png^[sheet:25x1:" .. (i - 1) .. ",0" },
-        groups = { pickaxey = 1, quartz_block = 1, building_block = 1, material_stone = 1, stonecuttable = 1, k_colorblocks = 1 },
-        sounds = defaultNodeSound,
-        light_source = quartzGlow,
-        paramtype2 = "color",
-        palette = palettes.full.image,
-        _mcl_blast_resistance = defaultBlastResistance,
-        _mcl_hardness = defaultHardness,
-    })
-
-    minetest.register_node("k_colorblocks:block_plain_" .. label, {
-        description = S("Stainable Plain Block " .. label),
-        is_ground_content = false,
-        tiles = { "k_colorblocks_node_plain_tiles.png^[sheet:25x1:" .. (i - 1) .. ",0" },
-        groups = { pickaxey = 1, quartz_block = 1, building_block = 1, material_stone = 1, stonecuttable = 1, k_colorblocks = 1 },
-        sounds = defaultNodeSound,
-        paramtype2 = "color",
-        palette = palettes.full.image,
-        _mcl_blast_resistance = defaultBlastResistance,
-        _mcl_hardness = defaultHardness,
-    })
-end
+-- node registration
+dofile(minetest.get_modpath(minetest.get_current_modname()) .. "/nodes.lua")

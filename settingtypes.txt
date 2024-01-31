@@ -1,0 +1,2 @@
+# Automatically allow coloring of some built in mineclonia nodes.
+k_colorblocks.allow_mineclonia (Integrate with Mineclonia) bool false
