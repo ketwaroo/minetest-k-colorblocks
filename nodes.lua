@@ -74,129 +74,106 @@ elseif minetest.get_modpath("mcl_sounds") then
     sounds.glass = mcl_sounds.node_sound_glass_defaults()
 end
 
+-- why is this not built into core helpers???
+local function table_merge(t1, t2)
+    local tx = table.copy(t1)
+    for key, value in pairs(t2) do
+        if "table" == type(value) then
+            tx[key] = table_merge(tx[key] or {}, value)
+        else
+            tx[key] = value
+        end
+    end
+    return tx
+end
+
 local glowLevel = 11
 local defaultHardness = 5
 local defaultBlastResistance = 100 -- to shoo the creepers away
+local defaultGroups = { handy = 1, pickaxey = 1, building_block = 1, }
 
-minetest.register_node("k_colorblocks:quartz_glow_block", {
-    description = S("Stainable Glowing Block of Quartz"),
-    is_ground_content = false,
-    tiles = { "k_colorblocks_quartz_block_top.png", "k_colorblocks_quartz_block_top.png", "k_colorblocks_quartz_block_side.png" },
-    groups = { pickaxey = 1, quartz_block = 1, building_block = 1, material_stone = 1, stonecuttable = 1, k_colorblocks = 1 },
-    sounds = sounds.default,
-    light_source = glowLevel,
-    paramtype2 = "color",
-    palette = k_colorblocks.palettes.full.image,
-    _mcl_blast_resistance = defaultBlastResistance,
-    _mcl_hardness = defaultHardness,
+-- must supply tiles
+local registerColorBlock = function(name, desc, overrides)
+    local def = {
+        is_ground_content = false,
+        description = S(string.format("Stainable %s", desc)),
+        paramtype2 = "color",
+        palette = k_colorblocks.palettes.full.image,
+        _mcl_blast_resistance = defaultBlastResistance,
+        _mcl_hardness = defaultHardness,
+        groups = defaultGroups,
+    };
 
-})
-minetest.register_node("k_colorblocks:quartz_block", {
-    description = S("Stainable Block of Quartz"),
-    is_ground_content = false,
-    tiles = { "k_colorblocks_quartz_block_top.png", "k_colorblocks_quartz_block_top.png", "k_colorblocks_quartz_block_side.png" },
-    groups = { pickaxey = 1, quartz_block = 1, building_block = 1, material_stone = 1, stonecuttable = 1, k_colorblocks = 1 },
-    sounds = sounds.default,
-    paramtype2 = "color",
-    palette = k_colorblocks.palettes.full.image,
-    _mcl_blast_resistance = defaultBlastResistance,
-    _mcl_hardness = defaultHardness,
+    def = table_merge(def, overrides or {})
+    def.groups.k_colorblocks = 1
+    print(dump(def))
+    minetest.register_node("k_colorblocks:" .. name, def)
 
-})
+    local defGlo        = table.copy(def)
+    -- glow variant
+    defGlo.description  = S(string.format("Stainable Glowing %s", desc))
+    defGlo.light_source = glowLevel
+    minetest.register_node("k_colorblocks:" .. name .. "_glow", defGlo)
+end
 
-minetest.register_node("k_colorblocks:glass", {
-    description = S("Stainable Glass"),
-    drawtype = "glasslike_framed",
-    is_ground_content = false,
-    tiles = { "k_colorblocks_glass.png", "k_colorblocks_glass_detail.png" },
-    use_texture_alpha = "blend",
-    paramtype = "light",
-    sunlight_propagates = true,
-    groups = { handy = 1, glass = 1, building_block = 1, material_glass = 1, k_colorblocks = 1 },
-    sounds = sounds.glass,
-    paramtype2 = "color",
-    palette = k_colorblocks.palettes.full.image,
-    _mcl_blast_resistance = defaultBlastResistance,
-    _mcl_hardness = defaultHardness,
-})
+registerColorBlock(
+    "quartz",
+    "Quartz Block",
+    {
+        tiles = { "k_colorblocks_quartz_block_top.png", "k_colorblocks_quartz_block_top.png", "k_colorblocks_quartz_block_side.png" },
+        groups = { quartz_block = 1, material_stone = 1, stonecuttable = 1, },
+    }
+)
 
-minetest.register_node("k_colorblocks:glass_glow", {
-    description = S("Glowing Stainable Glass"),
-    drawtype = "glasslike_framed",
-    is_ground_content = false,
-    tiles = { "k_colorblocks_glass.png", "k_colorblocks_glass_detail.png" },
-    use_texture_alpha = "blend",
-    paramtype = "light",
-    sunlight_propagates = true,
-    groups = { handy = 1, glass = 1, building_block = 1, material_glass = 1, k_colorblocks = 1 },
-    sounds = sounds.glass,
-    paramtype2 = "color",
-    light_source = glowLevel,
-    palette = k_colorblocks.palettes.full.image,
-    _mcl_blast_resistance = defaultBlastResistance,
-    _mcl_hardness = defaultHardness,
-})
+minetest.register_alias("k_colorblocks:quartz_block", "k_colorblocks:quartz")
+minetest.register_alias("k_colorblocks:quartz_glow_block", "k_colorblocks:quartz_glow")
+
+registerColorBlock(
+    "glass",
+    "Glass",
+    {
+        tiles = { "k_colorblocks_glass.png", "k_colorblocks_glass_detail.png" },
+        drawtype = "glasslike_framed",
+        use_texture_alpha = "blend",
+        groups = { glass = 1, material_glass = 1, },
+        sounds = sounds.glass,
+        paramtype = "light",
+        sunlight_propagates = true,
+    }
+)
 
 -- plain blocks
 local plainblocks = {}
 
-table.insert(plainblocks, "white")
+table.insert(plainblocks, "White")
 for i = 0, 345, 15 do
-    table.insert(plainblocks, "hue_" .. i)
+    table.insert(plainblocks, "Hue " .. i)
 end
 
 for i = 1, #plainblocks, 1 do
     local label = plainblocks[i]
-    minetest.register_node("k_colorblocks:block_plain_glow_" .. label, {
-        description = S("Stainable Plain Glowing Block " .. label),
-        is_ground_content = false,
-        tiles = { "k_colorblocks_node_plain_tiles.png^[sheet:25x1:" .. (i - 1) .. ",0" },
-        groups = { pickaxey = 1, quartz_block = 1, building_block = 1, material_stone = 1, stonecuttable = 1, k_colorblocks = 1 },
-        sounds = sounds.default,
-        light_source = glowLevel,
-        paramtype2 = "color",
-        palette = k_colorblocks.palettes.full.image,
-        _mcl_blast_resistance = defaultBlastResistance,
-        _mcl_hardness = defaultHardness,
-    })
+    local slug = string.gsub(string.lower(label), " ", "_")
 
-    minetest.register_node("k_colorblocks:block_plain_" .. label, {
-        description = S("Stainable Plain Block " .. label),
-        is_ground_content = false,
-        tiles = { "k_colorblocks_node_plain_tiles.png^[sheet:25x1:" .. (i - 1) .. ",0" },
-        groups = { pickaxey = 1, quartz_block = 1, building_block = 1, material_stone = 1, stonecuttable = 1, k_colorblocks = 1 },
-        sounds = sounds.default,
-        paramtype2 = "color",
-        palette = k_colorblocks.palettes.full.image,
-        _mcl_blast_resistance = defaultBlastResistance,
-        _mcl_hardness = defaultHardness,
-    })
-    
+    registerColorBlock(
+        "plain_" .. slug,
+        "Plain " .. label,
+        {
+            tiles = { "k_colorblocks_node_plain_tiles.png^[sheet:25x1:" .. (i - 1) .. ",0" },
+        }
+    )
+    minetest.register_alias("k_colorblocks:block_plain_" .. slug, "k_colorblocks:plain_" .. slug)
+    minetest.register_alias("k_colorblocks:block_plain_glow_" .. slug, "k_colorblocks:plain_" .. slug .. "_glow")
+
     -- translucent varients
-    minetest.register_node("k_colorblocks:block_plain_glow_translucent_" .. label, {
-        description = S("Stainable Plain Glowing Translucent Block " .. label),
-        is_ground_content = false,
-        tiles = { "k_colorblocks_node_plain_tiles_translucent.png^[sheet:25x1:" .. (i - 1) .. ",0" },
-        use_texture_alpha = "blend",
-        groups = { pickaxey = 1, quartz_block = 1, building_block = 1, material_stone = 1, stonecuttable = 1, k_colorblocks = 1 },
-        sounds = sounds.default,
-        light_source = glowLevel,
-        paramtype2 = "color",
-        palette = k_colorblocks.palettes.full.image,
-        _mcl_blast_resistance = defaultBlastResistance,
-        _mcl_hardness = defaultHardness,
-    })
-
-    minetest.register_node("k_colorblocks:block_plain_translucent_" .. label, {
-        description = S("Stainable Plain Translucent Block " .. label),
-        is_ground_content = false,
-        tiles = { "k_colorblocks_node_plain_tiles_translucent.png^[sheet:25x1:" .. (i - 1) .. ",0" },
-        use_texture_alpha = "blend",
-        groups = { pickaxey = 1, quartz_block = 1, building_block = 1, material_stone = 1, stonecuttable = 1, k_colorblocks = 1 },
-        sounds = sounds.default,
-        paramtype2 = "color",
-        palette = k_colorblocks.palettes.full.image,
-        _mcl_blast_resistance = defaultBlastResistance,
-        _mcl_hardness = defaultHardness,
-    })
+    registerColorBlock(
+        "plain_translucent_" .. slug,
+        "Plain Translucent " .. label,
+        {
+            tiles = { "k_colorblocks_node_plain_tiles_translucent.png^[sheet:25x1:" .. (i - 1) .. ",0" },
+            drawtype = "glasslike",
+            use_texture_alpha = "blend",
+        }
+    )
+    minetest.register_alias("k_colorblocks:block_plain_translucent_" .. slug, "k_colorblocks:plain_translucent_" .. slug)
+    minetest.register_alias("k_colorblocks:block_plain_glow_translucent_" .. slug, "k_colorblocks:plain_translucent_" .. slug .. "_glow")
 end
