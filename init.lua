@@ -236,20 +236,24 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
         "" ~= playerName
         and nil ~= k_colorblocks.nodes[node.name]
         and nil ~= k_colorblocks.gui_contexts[playerName]
-        and (
-            nil ~= k_colorblocks.gui_contexts[playerName].current_col
-            or nil ~= k_colorblocks.gui_contexts[playerName].current_col_aux
-        )
         and "k_colorblocks:wand" == puncher:get_wielded_item():get_name()
     then
         local pc = puncher:get_player_control()
+        local newCol = 0
+
         if pc.aux1 and nil ~= k_colorblocks.gui_contexts[playerName].current_col_aux then
-            node.param2 = k_colorblocks.gui_contexts[playerName].current_col_aux
+            newCol = k_colorblocks.gui_contexts[playerName].current_col_aux
         elseif nil ~= k_colorblocks.gui_contexts[playerName].current_col then
-            node.param2 = k_colorblocks.gui_contexts[playerName].current_col
+            newCol = k_colorblocks.gui_contexts[playerName].current_col
         end
 
-        minetest.set_node(pos, node)
+        -- checks colour change to maybe prevents extra node changes
+        if newCol ~= node.param2 then
+            -- print(dump("set "..newCol).. dump(node))
+            node.param2 = newCol
+            minetest.set_node(pos, node)
+        end
+
         --local meta = minetest.get_meta(pos)
         --meta:set_int("k_colorblocks_col", node.param2)
     end
@@ -293,6 +297,8 @@ end)
 --     print(dump(newnode) .. itemstack:to_string())
 -- end)
 
+-- really prevent digging things up.
+local nodigcap = { times = { [1] = math.huge, [2] = math.huge, [3] = math.huge }, uses = 0, maxlevel = 1 }
 -- tool to switch things.
 minetest.register_tool("k_colorblocks:wand", {
     description = S("Wand of the Application of the Kolor"),
@@ -300,19 +306,33 @@ minetest.register_tool("k_colorblocks:wand", {
     -- keep it to creative mode srsly
     -- tbd: range might not be working as expected sometimes?
     range = 200,
-    light_level=14,
+    light_level = 14,
     wield_scale = { x = 1.0, y = 1.0, z = 1.0, },
     groups = { tool = 1, fire_immune = 1 },
     liquids_pointable = false,
     tool_capabilities = {
         full_punch_interval = 0,
-        max_drop_level = 10,
+        max_drop_level = 0,
+        groupcaps = {
+            bendy                   = nodigcap,
+            pickaxey                = nodigcap,
+            snappy                  = nodigcap,
+            fleshy                  = nodigcap,
+            cracky                  = nodigcap,
+            choppy                  = nodigcap,
+            crumbly                 = nodigcap,
+            unbreakable             = nodigcap,
+            dig_immediate           = nodigcap,
+            oddly_breakable_by_hand = nodigcap,
+        },
+        damage_groups = { fleshy = 0, cracky = 0, },
         punch_attack_uses = 0,
     },
     _mcl_toollike_wield = true,
     -- so that it can't actually dig anything
     _mcl_diggroups = {
         handy = { speed = 0, level = 0, uses = 0 },
+        cracky = { speed = 0, level = 0, uses = 0 },
         hoey = { speed = 0, level = 0, uses = 0 },
         pickaxey = { speed = 0, level = 0, uses = 0 },
         shovely = { speed = 0, level = 0, uses = 0 },
