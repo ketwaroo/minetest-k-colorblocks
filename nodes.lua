@@ -106,7 +106,7 @@ local registerColorBlock = function(name, desc, overrides)
 
     def = table_merge(def, overrides or {})
     def.groups.k_colorblocks = 1
-    print(dump(def))
+    --print(dump(def))
     minetest.register_node("k_colorblocks:" .. name, def)
 
     local defGlo        = table.copy(def)
