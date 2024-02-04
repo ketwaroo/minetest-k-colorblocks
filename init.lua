@@ -332,7 +332,6 @@ minetest.register_tool("k_colorblocks:wand", {
     -- so that it can't actually dig anything
     _mcl_diggroups = {
         handy = { speed = 0, level = 0, uses = 0 },
-        cracky = { speed = 0, level = 0, uses = 0 },
         hoey = { speed = 0, level = 0, uses = 0 },
         pickaxey = { speed = 0, level = 0, uses = 0 },
         shovely = { speed = 0, level = 0, uses = 0 },
