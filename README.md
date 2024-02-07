@@ -1,7 +1,7 @@
 K Color Blocks
 ==============
 
-## What this does
+# What this does
 
 This mod add stainable blocks for creative mode.
 
@@ -13,7 +13,7 @@ The implementation felt a little clunky to me and so I came my with my even clun
 
 Currently supports only one palette with 15 grey values and 240 color values split into 12 hues. Each hue has 10 full saturation with scaled luminance and the remaining ten are lower saturation. It's not a palette that evenly splits all RGB colours into 256 but rather colours that are subjectively fun to paint with.
 
-## Features and Usage
+# Features and Usage
 
 Requires creative mode to be able to access the Colouring Wand and blocks.
 
@@ -31,19 +31,21 @@ Requires creative mode to be able to access the Colouring Wand and blocks.
  * Setting to automatically register certain nodes as stainable.
     * See `k_colorblocks.autoregister_nodes` setting. Disabled by default
     * Works in [Mineclonia](https://content.minetest.net/packages/ryvnf/mineclonia/) and default game to some extent
-       * Concrete blocks, slabs, and powder
-       * Terracota patterns
-       * light blocks ([`mcl_light_blocks`](https://content.minetest.net/packages/Tony996-source/mcl_light_blocks/) third party mod, which is a bit redundant...)
-       * wools and carpets.
-       * snow and ice. kind of.
+        * Concrete blocks, slabs, and powder
+        * Terracota patterns
+        * light blocks ([`mcl_light_blocks`](https://content.minetest.net/packages/Tony996-source/mcl_light_blocks/) third party mod, which is a bit redundant...)
+        * wools and carpets.
+        * snow and ice. kind of.
     * Does not work with nodes which are already using `param2` and `paramtype2` for different purposes. such as rotation values for beds and stair blocks. May fix eventually.
 
 Place stainable blocks in whatever configuration you fancy, right click with the wand to show the color picker, pick a color and click OK or just double-click on the color tile, and paint away.
 
 Stained blocks retain their tint when you dig them again so you can prepare a swatch of colored blocks before hand and then build your imagination without having to tweak color each time.
 
-## Other notes:
-### Media License
-The textures for the quartz block were lifted from [mineclonia](https://codeberg.org/mineclonia/mineclonia), which is using [pixelperfection](https://www.planetminecraft.com/texture_pack/131pixel-perfection/) texture pack, so the media license for textures in this mod is also [CC-BY-SA-4.0](http://creativecommons.org/licenses/by-sa/4.0/).
+# License
 
-All other textures and media created by me, including palette files, are also licensed [CC-BY-SA-4.0](http://creativecommons.org/licenses/by-sa/4.0/) because it's a hassle to have multiple licenses. I'm not a lawyer.
+Code is under [GPL 3.0 or Later](https://spdx.org/licenses/GPL-3.0-or-later.html).
+
+The textures for the quartz block were lifted from [mineclonia](https://codeberg.org/mineclonia/mineclonia), which is using [pixelperfection](https://www.planetminecraft.com/texture_pack/131pixel-perfection/) texture pack, so the media license for those textures is [CC-BY-SA-4.0](http://creativecommons.org/licenses/by-sa/4.0/).
+
+All other textures and media created by me, including palette files, are also licensed [CC-BY-SA-4.0](http://creativecommons.org/licenses/by-sa/4.0/).
