@@ -44,6 +44,8 @@ Stained blocks retain their tint when you dig them again so you can prepare a sw
 
 # License
 
+see `LICENSE` file.
+
 Code is under [GPL 3.0 or Later](https://spdx.org/licenses/GPL-3.0-or-later.html).
 
 The textures for the quartz block were lifted from [mineclonia](https://codeberg.org/mineclonia/mineclonia), which is using [pixelperfection](https://www.planetminecraft.com/texture_pack/131pixel-perfection/) texture pack, so the media license for those textures is [CC-BY-SA-4.0](http://creativecommons.org/licenses/by-sa/4.0/).
