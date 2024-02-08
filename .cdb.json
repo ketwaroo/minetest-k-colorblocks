@@ -3,7 +3,7 @@
     "title": "K Color Blocks",
     "short_description": "Adds specific stainable blocks for building stuff in creative mode. Comes with a rainbow wand for applying the tints.",
     "dev_state": "ACTIVELY_DEVELOPED",
-    "tags": ["creative"],
+    "tags": ["creative","decorative","building"],
     "license": "GPL-3.0-or-later",
     "media_license": "CC-BY-SA-4.0",
     "issue_tracker": "https://github.com/ketwaroo/minetest-k-colorblocks/issues",
