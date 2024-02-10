@@ -1,6 +1,8 @@
 local S = minetest.get_translator(minetest.get_current_modname())
 local F = minetest.formspec_escape
 
+local hueMap = dofile(minetest.get_modpath(minetest.get_current_modname()) .. "/data.lua")
+
 k_colorblocks = {
     palettes = {
         full = {
@@ -10,21 +12,6 @@ k_colorblocks = {
                     "Reds",
                     "Greens",
                     "Blues",
-                }
-                -- colour names were lifted off wikipedia
-                local colours = {
-                    "Red",
-                    "Orange",
-                    "Yellow",
-                    "Chartreuse",
-                    "Green",
-                    "Spring green",
-                    "Cyan",
-                    "Azure",
-                    "Blue",
-                    "Violet",
-                    "Magenta",
-                    "Rose",
                 }
 
                 local grids = {
@@ -41,7 +28,8 @@ k_colorblocks = {
 
                     for c = colstart, colend, 1 do
                         local row = (c - 1) % 4
-                        table.insert(grids, { top = 1.55 + (2.25 * row), left = 0.4 + ((p - 1) * 2.75), istart = idx, iend = (idx + 19), w = 5, label = colours[c] })
+                        local hueAngle = "" .. 30 * (c - 1)
+                        table.insert(grids, { top = 1.55 + (2.25 * row), left = 0.4 + ((p - 1) * 2.75), istart = idx, iend = (idx + 19), w = 5, label = hueMap[hueAngle] or "" })
                         idx = idx + 20
                     end
                 end
@@ -161,7 +149,9 @@ k_colorblocks = {
         local formspec                       = "size[" .. (endleft + 0.4) .. "," .. (endtop + 0.9) .. "]"
             .. "padding[0,0]"
             .. "real_coordinates[true]"
-            .. "label[0.3,0.3;" .. F(S("K Color Picker")) .. "]"
+            .. "style[k_col,...;font_size=11]"
+            .. "style_type[label,...;font_size=11]"
+            .. "hypertext[0.3,0.2;4,0.5;title;" .. S("K Color Picker") .. "]"
             .. formspecgrids
             .. "button_exit[" .. (endleft - 2.0) .. "," .. (endtop + 0.1) .. ";0.7,0.6;ok_aux;" .. F(S("Aux")) .. "]"
             .. "button_exit[" .. (endleft - 1.3) .. "," .. (endtop + 0.1) .. ";0.7,0.6;ok;" .. F(S("OK")) .. "]"

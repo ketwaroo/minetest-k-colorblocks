@@ -1,10 +1,11 @@
 local S = minetest.get_translator(minetest.get_current_modname())
 
-
+local hueMap = dofile(minetest.get_modpath(minetest.get_current_modname()) .. "/data.lua")
 
 -- cache nodes with the group
 minetest.register_on_mods_loaded(function()
     local autoRegister = minetest.settings:get_bool("k_colorblocks.autoregister_nodes", false)
+    local iNSaNiTy = minetest.settings:get_bool("k_colorblocks.iNSaNiTy", false)
 
     -- mapping of paramtype2 -> [new paramtype2, palette]
     local paramtypemap = {
@@ -23,22 +24,25 @@ minetest.register_on_mods_loaded(function()
         end
 
         if
-            autoRegister
-            and (
-                def.groups.concrete
-                or def.groups.concrete_powder
-                or string.find(key, "mcl_stairs:slab_concrete_")
-                --or string.find(key, "mcl_stairs:stair_concrete_") -- rotation issues.
-                or def.groups.wool
-                or def.groups.carpet
-                or def.groups.glass                      -- because stained glass. seems to work even with connected glass. not with paramtype2 = "glasslikeliquidlevel"
-                or string.find(key, "mcl_light_blocks:") -- the kids like light blocks
-                or def.groups.hardened_clay
-                or def.groups.glazed_terracotta          -- make patterns pop
-                or def.groups.snowy                      -- default snow. needs testing in snowy weather.
-                or def.groups.snow_cover                 -- needs testing in snowy weather.
-                or def.groups.snow_top
-                or def.groups.ice                        -- ice castles
+            iNSaNiTy
+            or (
+                autoRegister
+                and (
+                    def.groups.concrete
+                    or def.groups.concrete_powder
+                    or string.find(key, "mcl_stairs:slab_concrete_")
+                    --or string.find(key, "mcl_stairs:stair_concrete_") -- rotation issues.
+                    or def.groups.wool
+                    or def.groups.carpet
+                    or def.groups.glass                  -- because stained glass. seems to work even with connected glass. not with paramtype2 = "glasslikeliquidlevel"
+                    or string.find(key, "mcl_light_blocks:") -- the kids like light blocks
+                    or def.groups.hardened_clay
+                    or def.groups.glazed_terracotta      -- make patterns pop
+                    or def.groups.snowy                  -- default snow. needs testing in snowy weather.
+                    or def.groups.snow_cover             -- needs testing in snowy weather.
+                    or def.groups.snow_top
+                    or def.groups.ice                    -- ice castles
+                )
             )
         then
             if paramtypemap[def.paramtype2] then
@@ -111,7 +115,7 @@ local registerColorBlock = function(name, desc, overrides)
 
     local defGlo        = table.copy(def)
     -- glow variant
-    defGlo.description  = S(string.format("Stainable Glowing %s", desc))
+    defGlo.description  = S(string.format("Stainable %s Glow", desc))
     defGlo.light_source = glowLevel
     minetest.register_node("k_colorblocks:" .. name .. "_glow", defGlo)
 end
@@ -145,14 +149,27 @@ registerColorBlock(
 -- plain blocks
 local plainblocks = {}
 
-table.insert(plainblocks, "White")
-for i = 0, 345, 15 do
-    table.insert(plainblocks, "Hue " .. i)
+table.insert(plainblocks, {
+    name = "white",
+    label = "White",
+})
+
+local useColourName = minetest.settings:get_bool("k_colorblocks.use_colorname", true)
+
+if true == minetest.settings:get_bool("k_colorblocks.register_colored_nodes", true) then
+    for i = 0, 345, 15 do
+        table.insert(plainblocks,
+            {
+                name = "hue_" .. i,
+                label = useColourName and hueMap["" .. i] or ("Hue " .. i),
+            })
+    end
 end
 
 for i = 1, #plainblocks, 1 do
-    local label = plainblocks[i]
-    local slug = string.gsub(string.lower(label), " ", "_")
+    local label = plainblocks[i].label
+    local slug = plainblocks[i].name
+    local altSlug = string.gsub(string.lower(label), " ", "_")
 
     registerColorBlock(
         "plain_" .. slug,
@@ -167,7 +184,7 @@ for i = 1, #plainblocks, 1 do
     -- translucent varients
     registerColorBlock(
         "plain_translucent_" .. slug,
-        "Plain Translucent " .. label,
+        "Plain " .. label .. " Translucent",
         {
             tiles = { "k_colorblocks_node_plain_tiles_translucent.png^[sheet:25x1:" .. (i - 1) .. ",0" },
             drawtype = "glasslike",
@@ -176,4 +193,11 @@ for i = 1, #plainblocks, 1 do
     )
     minetest.register_alias("k_colorblocks:block_plain_translucent_" .. slug, "k_colorblocks:plain_translucent_" .. slug)
     minetest.register_alias("k_colorblocks:block_plain_glow_translucent_" .. slug, "k_colorblocks:plain_translucent_" .. slug .. "_glow")
+
+    -- node name aliases. for occasional unknown blocks between updates.
+    if altSlug ~= slug then
+        minetest.register_alias("k_colorblocks:plain_" .. altSlug, "k_colorblocks:plain_" .. slug)
+        minetest.register_alias("k_colorblocks:plain_translucent_" .. altSlug, "k_colorblocks:plain_translucent_" .. slug)
+        minetest.register_alias("k_colorblocks:plain_translucent_" .. altSlug .. "_glow", "k_colorblocks:plain_translucent_" .. slug .. "_glow")
+    end
 end

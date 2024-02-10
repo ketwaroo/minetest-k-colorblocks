@@ -1,2 +1,18 @@
 # Automatically allow coloring of some built in mineclonia and default game nodes.
 k_colorblocks.autoregister_nodes (Integrate with Existing Nodes) bool false
+
+# By default adds precoloured variations of plain nodes.
+# if disabled only a white base node will be added.
+# !WARNING! Results in unknown blocks if coloured blocks were already used in world.
+k_colorblocks.register_colored_nodes (Add extra coloured nodes) bool true
+
+# Try to use colour names instead of technical values where possible
+# For example node description would say `Red` instead of `Hue 0`
+k_colorblocks.use_colorname (Show Colour names where possible) bool true
+
+# Make EVERYTHING that can be coloured, colourable.
+# !WARNING! Definitely will break things.
+# Has some limits. Does not apply to connected nodes such as double chests and beds, and a few special nodes.
+# Can cause performance dip if you repaint too many nodes
+k_colorblocks.iNSaNiTy (ALL THE THINGS *EXPERIMENTAL*) bool false
+
