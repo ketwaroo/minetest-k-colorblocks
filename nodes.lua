@@ -1,6 +1,11 @@
 local S = minetest.get_translator(minetest.get_current_modname())
 
-local hueMap = dofile(minetest.get_modpath(minetest.get_current_modname()) .. "/data.lua")
+
+-- lookup of nodes that shouldn't be affected by auto register.
+k_colorblocks.autoRegisterProtectedNodes = {}
+
+-- cherry blossom leaves don't wilt
+k_colorblocks.autoRegisterProtectedNodes["mcl_trees:leaves_cherry_blossom"] = 1
 
 -- cache nodes with the group
 minetest.register_on_mods_loaded(function()
@@ -10,11 +15,9 @@ minetest.register_on_mods_loaded(function()
     -- mapping of paramtype2 -> [new paramtype2, palette]
     local paramtypemap = {
         none = { "color", k_colorblocks.palettes.full.image },
-        color = { "color", k_colorblocks.palettes.full.image },
         -- @todo below needs some work...
         -- degrotate = { "colordegrotate", k_colorblocks.palettes.full.image},
         -- facedir = { "colorfacedir", k_colorblocks.palettes.full.image }, -- could use `color4dir` for more colours
-        --color4dir = { "color4dir", k_colorblocks.palettes.full.image },
         -- wallmounted = { "colorwallmounted", k_colorblocks.palettes.full.image },
     }
 
@@ -22,26 +25,29 @@ minetest.register_on_mods_loaded(function()
         if def.groups.k_colorblocks then
             k_colorblocks:cacheNode(key)
         end
-
         if
-            iNSaNiTy
-            or (
-                autoRegister
-                and (
-                    def.groups.concrete
-                    or def.groups.concrete_powder
-                    or string.find(key, "mcl_stairs:slab_concrete_")
-                    --or string.find(key, "mcl_stairs:stair_concrete_") -- rotation issues.
-                    or def.groups.wool
-                    or def.groups.carpet
-                    or def.groups.glass                  -- because stained glass. seems to work even with connected glass. not with paramtype2 = "glasslikeliquidlevel"
-                    or string.find(key, "mcl_light_blocks:") -- the kids like light blocks
-                    or def.groups.hardened_clay
-                    or def.groups.glazed_terracotta      -- make patterns pop
-                    or def.groups.snowy                  -- default snow. needs testing in snowy weather.
-                    or def.groups.snow_cover             -- needs testing in snowy weather.
-                    or def.groups.snow_top
-                    or def.groups.ice                    -- ice castles
+            nil == k_colorblocks.autoRegisterProtectedNodes[key]
+            and (
+                iNSaNiTy
+                or (
+                    autoRegister
+                    and (
+                        -- @todo make list configurable perhaps.
+                        def.groups.concrete
+                        or def.groups.concrete_powder
+                        or string.find(key, "mcl_stairs:slab_concrete_")
+                        --or string.find(key, "mcl_stairs:stair_concrete_") -- rotation issues.
+                        or def.groups.wool
+                        or def.groups.carpet
+                        or def.groups.glass                  -- because stained glass. seems to work even with connected glass. not with paramtype2 = "glasslikeliquidlevel"
+                        or string.find(key, "mcl_light_blocks:") -- the kids like light blocks
+                        or def.groups.hardened_clay
+                        or def.groups.glazed_terracotta      -- make patterns pop
+                        or def.groups.snowy                  -- default snow. needs testing in snowy weather.
+                        or def.groups.snow_cover             -- needs testing in snowy weather.
+                        or def.groups.snow_top
+                        or def.groups.ice                    -- ice castles
+                    )
                 )
             )
         then
@@ -161,7 +167,7 @@ if true == minetest.settings:get_bool("k_colorblocks.register_colored_nodes", tr
         table.insert(plainblocks,
             {
                 name = "hue_" .. i,
-                label = useColourName and hueMap["" .. i] or ("Hue " .. i),
+                label = useColourName and k_colorblocks.hueMap["" .. i] or ("Hue " .. i),
             })
     end
 end

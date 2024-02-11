@@ -1,9 +1,9 @@
 local S = minetest.get_translator(minetest.get_current_modname())
 local F = minetest.formspec_escape
 
-local hueMap = dofile(minetest.get_modpath(minetest.get_current_modname()) .. "/data.lua")
 
 k_colorblocks = {
+    hueMap = dofile(minetest.get_modpath(minetest.get_current_modname()) .. "/data.lua"),
     palettes = {
         full = {
             image = "k_colorblocks_palette_color_full.png",
@@ -29,7 +29,7 @@ k_colorblocks = {
                     for c = colstart, colend, 1 do
                         local row = (c - 1) % 4
                         local hueAngle = "" .. 30 * (c - 1)
-                        table.insert(grids, { top = 1.55 + (2.25 * row), left = 0.4 + ((p - 1) * 2.75), istart = idx, iend = (idx + 19), w = 5, label = hueMap[hueAngle] or "" })
+                        table.insert(grids, { top = 1.55 + (2.25 * row), left = 0.4 + ((p - 1) * 2.75), istart = idx, iend = (idx + 19), w = 5, label = k_colorblocks.hueMap[hueAngle] or "" })
                         idx = idx + 20
                     end
                 end
