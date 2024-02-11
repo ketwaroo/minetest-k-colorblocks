@@ -165,13 +165,11 @@ k_colorblocks = {
             local texture = self.palettes.full.image .. "^[sheet:256x1:" .. pn.param2 .. ",0"
 
             formspec = formspec
-                .. "label[0.4," .. (endtop + 0.2) .. ";" .. S("Pointed") .. "]"
-                .. "label[0.4," .. (endtop + 0.4) .. ";" .. S("Block") .. "]"
-                .. "label[0.4," .. (endtop + 0.6) .. ";" .. S("Color") .. "]"
+                .. "label[0.4," .. (endtop + 0.2) .. ";" .. S("Pointed:") .. "]"
                 .. string.format(
                     "image_button[%.4f,%.4f;0.5,0.5;%s;k_col;%d;false;false]",
-                    1.4,
-                    (endtop + 0.1),
+                    0.4,
+                    (endtop + 0.3),
                     F(texture),
                     pn.param2
                 )
@@ -181,12 +179,11 @@ k_colorblocks = {
             local texture = self.palettes.full.image .. "^[sheet:256x1:" .. self.gui_contexts[playerName].current_col .. ",0"
 
             formspec = formspec
-                .. "label[2.3," .. (endtop + 0.3) .. ";" .. S("Current") .. "]"
-                .. "label[2.3," .. (endtop + 0.5) .. ";" .. S("Color") .. "]"
+                .. "label[1.4," .. (endtop + 0.2) .. ";" .. S("Current:") .. "]"
                 .. string.format(
                     "image_button[%.4f,%.4f;0.5,0.5;%s;k_col;%d;false;false]",
-                    3.0,
-                    (endtop + 0.1),
+                    1.4,
+                    (endtop + 0.3),
                     F(texture),
                     self.gui_contexts[playerName].current_col
                 )
@@ -196,12 +193,11 @@ k_colorblocks = {
             local texture = self.palettes.full.image .. "^[sheet:256x1:" .. self.gui_contexts[playerName].current_col_aux .. ",0"
 
             formspec = formspec
-                .. "label[3.9," .. (endtop + 0.3) .. ";" .. S("Aux") .. "]"
-                .. "label[3.9," .. (endtop + 0.5) .. ";" .. S("Color") .. "]"
+                .. "label[2.4," .. (endtop + 0.2) .. ";" .. S("Aux:") .. "]"
                 .. string.format(
                     "image_button[%.4f,%.4f;0.5,0.5;%s;k_col;%d;false;false]",
-                    4.6,
-                    (endtop + 0.1),
+                    2.4,
+                    (endtop + 0.3),
                     F(texture),
                     self.gui_contexts[playerName].current_col_aux
                 )
