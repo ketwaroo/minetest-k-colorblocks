@@ -28,15 +28,21 @@ Requires creative mode to be able to access the Colouring Wand and blocks.
     * After selecting second color, click the `Aux` button to set it.
     * Hold `aux1` button while dragging tool across surface to use aux colour.
     * Typical usage for this would have `aux` be palette index `0` which is white. This can serve as undo feature so you don't have to switch back and forth between the colour you want and `0` if you make mistakes.
- * Setting to automatically register certain nodes as stainable.
+ * Setting to automatically register certain nodes as stainable, more or less safely.
     * See `k_colorblocks.autoregister_nodes` setting. Disabled by default
     * Works in [Mineclonia](https://content.minetest.net/packages/ryvnf/mineclonia/) and default game to some extent
         * Concrete blocks, slabs, and powder
         * Terracota patterns
-        * light blocks ([`mcl_light_blocks`](https://content.minetest.net/packages/Tony996-source/mcl_light_blocks/) third party mod, which is a bit redundant...)
         * wools and carpets.
         * snow and ice. kind of.
-    * Does not work with nodes which are already using `param2` and `paramtype2` for different purposes. such as rotation values for beds and stair blocks. May fix eventually.
+    * iNSaNiTy MODE (new in 1.0.2)
+        * Attempts to make everything colourable.
+        * See `k_colorblocks.iNSaNiTy` setting. Disabled by default. Overrides `k_colorblocks.autoregister_nodes` if enabled.
+    * Auto registration of nodes (both safe and insanity mode) does not work with nodes which are already using `param2` and `paramtype2` for different purposes. such as rotation values for beds and stair blocks.
+ *  Brush radius (new in 1.0.3)
+    * Main/Aux colours can have separate brush radius.
+    * Brush radius only try to colour a square in the same 2D plane as the punched node for the time being.
+
 
 Place stainable blocks in whatever configuration you fancy, right click with the wand to show the color picker, pick a color and click OK or just double-click on the color tile, and paint away.
 
