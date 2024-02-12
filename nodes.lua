@@ -40,7 +40,6 @@ minetest.register_on_mods_loaded(function()
                         or def.groups.wool
                         or def.groups.carpet
                         or def.groups.glass                  -- because stained glass. seems to work even with connected glass. not with paramtype2 = "glasslikeliquidlevel"
-                        or string.find(key, "mcl_light_blocks:") -- the kids like light blocks
                         or def.groups.hardened_clay
                         or def.groups.glazed_terracotta      -- make patterns pop
                         or def.groups.snowy                  -- default snow. needs testing in snowy weather.
