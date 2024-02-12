@@ -210,7 +210,7 @@ k_colorblocks = {
                     (endtop + 0.3),
                     (self.gui_contexts[playerName].selected_col_size or self.gui_contexts[playerName].current_col_size or 0) + 1
                 )
-                .. "tooltip[current_col_size;" .. S("Main Color Wand Radius") .. "]"
+                .. "tooltip[selected_col_size;" .. S("Main Color Wand Radius") .. "]"
         end
 
         if nil ~= self.gui_contexts[playerName].current_col_aux then
@@ -232,7 +232,7 @@ k_colorblocks = {
                     (endtop + 0.3),
                     (self.gui_contexts[playerName].selected_col_aux_size or self.gui_contexts[playerName].current_col_aux_size or 0) + 1
                 )
-                .. "tooltip[current_col_aux_size;" .. S("Aux Color Wand Radius") .. "]"
+                .. "tooltip[selected_col_aux_size;" .. S("Aux Color Wand Radius") .. "]"
         end
 
         minetest.show_formspec(player:get_player_name(), "k_colorblocks_selector", formspec)
