@@ -1,6 +1,5 @@
 K Color Blocks
 ==============
-
 # What this does
 
 This mod add stainable blocks for creative mode.
@@ -32,17 +31,18 @@ Requires creative mode to be able to access the Colouring Wand and blocks.
     * See `k_colorblocks.autoregister_nodes` setting. Disabled by default
     * Works in [Mineclonia](https://content.minetest.net/packages/ryvnf/mineclonia/) and default game to some extent
         * Concrete blocks, slabs, and powder
-        * Terracota patterns
+        * Terracotta patterns
         * wools and carpets.
         * snow and ice. kind of.
     * iNSaNiTy MODE (new in 1.0.2)
         * Attempts to make everything colourable.
+        * EXPERIMENTAL. WILL PROBABLY BREAK SOME THINGS.
         * See `k_colorblocks.iNSaNiTy` setting. Disabled by default. Overrides `k_colorblocks.autoregister_nodes` if enabled.
     * Auto registration of nodes (both safe and insanity mode) does not work with nodes which are already using `param2` and `paramtype2` for different purposes. such as rotation values for beds and stair blocks.
  *  Brush radius (new in 1.0.3)
     * Main/Aux colours can have separate brush radius.
-    * Brush radius only try to colour a square in the same 2D plane as the punched node for the time being.
-
+    * Brush radius attempts to colour a square in the same flat 2D plane along the punched face of targeted node. Does not wrap around uneven surfaces for now.
+        * radius 0 = 1 node dot, radius 1 = 3x3 square, radius 2 = 5x5 square, radius n = (2n+1)x(2n+1) square, up to radius 9 = 19x19 square
 
 Place stainable blocks in whatever configuration you fancy, right click with the wand to show the color picker, pick a color and click OK or just double-click on the color tile, and paint away.
 
