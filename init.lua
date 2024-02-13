@@ -7,6 +7,7 @@ k_colorblocks = {
     palettes = {
         full = {
             image = "k_colorblocks_palette_color_full.png",
+            colorString = dofile(minetest.get_modpath(minetest.get_current_modname()) .. "/palette_data/full.lua"),
             formspec = function(self, player)
                 local primary = {
                     "Reds",
@@ -54,14 +55,16 @@ k_colorblocks = {
                 return table.concat(formspecParts), endleft, endtop
             end,
         },
-        grey = {
-            image = "k_colorblocks_palette_grey_full.png",
-            formspec = function(self, player)
-                local pad = k_colorblocks.gui_config.pad
-                local formspec, eleft, etop = k_colorblocks:buildColorGrid((pad * 2), pad, self.image, 0, 255, 16, player)
-                formspec = formspec .. "label[" .. pad .. ",0.7;" .. F(S("Greyscale")) .. "]"
-            end,
-        }
+        -- @todo disabled for now. need support the smaller palettes for rotating nodes and so on.
+        -- grey = {
+        --     image = "k_colorblocks_palette_grey_full.png",
+        --     colorString = {}, -- .... generate this
+        --     formspec = function(self, player)
+        --         local pad = k_colorblocks.gui_config.pad
+        --         local formspec, eleft, etop = k_colorblocks:buildColorGrid((pad * 2), pad, self.image, 0, 255, 16, player)
+        --         formspec = formspec .. "label[" .. pad .. ",0.7;" .. F(S("Greyscale")) .. "]"
+        --     end,
+        -- }
     },
     -- map of nodes we can apply colours to for quicker lookup.
     nodes = {},
@@ -89,7 +92,6 @@ k_colorblocks = {
         local currentColAux = playerName and self.gui_contexts[playerName] and self.gui_contexts[playerName].current_col_aux or nil
 
         local cellSize = self.gui_config.cell
-        --image_button[<X>,<Y>;<W>,<H>;<texture name>;<name>;<label>]
 
         for idx = startIdx, endIdx, 1 do
             local localIdx = idx - startIdx
@@ -161,10 +163,10 @@ k_colorblocks = {
         local cell                           = self.gui_config.cell
         local pad                            = self.gui_config.pad
 
-        local formspec                       = "size[" .. (endleft + pad) .. "," .. (endtop + 0.9) .. "]"
+        local formspec                       = "size[" .. (endleft + pad) .. "," .. (endtop + (pad * 2.75)) .. "]"
             .. "padding[0,0]"
             .. "real_coordinates[true]"
-            .. "style_type[*,...;font_size=11]" -- smaller font on everything so it fits.
+            .. "style_type[*;font_size=11]" -- smaller font on everything so it fits.
             .. "hypertext[0.3,0.2;4,0.5;title;" .. S("K Color Picker") .. "]"
             .. formspecgrids
             .. "button_exit[" .. (endleft - 2.0) .. "," .. (endtop + 0.2) .. ";0.7,0.6;ok_aux;" .. F(S("Aux")) .. "]"
@@ -175,39 +177,103 @@ k_colorblocks = {
 
         local playerName                     = player and player:get_player_name() or nil
         local pn                             = playerName and self.gui_contexts[playerName] and self.gui_contexts[playerName].pointed_node or nil
+        -- offset for borrom form elements
+        local boffx                          = pad
+        local boffy                          = endtop + 0.3
 
-        -- @todo refactor bottom tiles
-        if pn and nil ~= pn.param2 then
-            local texture = self.palettes.full.image .. "^[sheet:256x1:" .. pn.param2 .. ",0"
+        if nil ~= pn and nil ~= pn.name then
+            -- preview current texture. kind of.
+            local nodeDef = minetest.registered_nodes[pn.name]
 
-            formspec = formspec
-                .. "label[" .. pad .. "," .. (endtop + 0.2) .. ";" .. S("Pointed:") .. "]"
-                .. string.format(
-                    "image_button[%.4f,%.4f;" .. cell .. "," .. cell .. ";%s;k_col;%d;false;false]",
-                    pad,
-                    (endtop + 0.3),
-                    F(texture),
-                    pn.param2
+            -- @todo refactor bottom tiles
+
+            if nil ~= pn.param2 and nil ~= self.palettes.full.colorString["" .. pn.param2] then
+                -- local texture = self.palettes.full.image .. "^[sheet:256x1:" .. pn.param2 .. ",0"
+                local texture = string.format(
+                    "%s^[multiply:%s",
+                    nodeDef.tiles[1],
+                    self.palettes.full.colorString["" .. pn.param2]
                 )
+
+                formspec = formspec
+                    .. "label[" .. boffx .. "," .. (endtop + 0.2) .. ";" .. S("Pointed:") .. "]"
+                    .. string.format(
+                        "image_button[%.4f,%.4f;" .. cell .. "," .. cell .. ";%s;k_col;%d;false;false]",
+                        boffx,
+                        boffy,
+                        F(texture),
+                        pn.param2
+                    )
+                    .. string.format(
+                        "tooltip[%.4f,%.4f;" .. cell .. "," .. cell .. ";%s]",
+                        boffx,
+                        boffy,
+                        S("Pointed Thing Texture With Current Color")
+                    )
+            end
+
+            -- various previews
+            local colsPreviews = {
+                playerName and self.gui_contexts[playerName] and self.gui_contexts[playerName].selected_col or nil,
+                playerName and self.gui_contexts[playerName] and self.gui_contexts[playerName].current_col or nil,
+                playerName and self.gui_contexts[playerName] and self.gui_contexts[playerName].current_col_aux or nil,
+            }
+
+            local colPreviewsLabel = {
+                "Preview of Pointed Thing with Selected Color",
+                "Preview of Pointed Thing with Main Color",
+                "Preview of Pointed Thing with Aux Color"
+            }
+
+            for i = 1, 3, 1 do
+                if
+                    nil ~= colsPreviews[i]
+                    and nil ~= self.palettes.full.colorString["" .. colsPreviews[i]]
+                then
+                    boffx = boffx + cell
+
+                    local texturePreview = string.format(
+                        "%s^[multiply:%s",
+                        nodeDef.tiles[1],
+                        self.palettes.full.colorString["" .. colsPreviews[i]]
+                    )
+
+                    formspec = formspec
+                        .. string.format(
+                            "image[%.4f,%.4f;" .. cell .. "," .. cell .. ";%s]",
+                            boffx,
+                            boffy,
+                            F(texturePreview)
+                        )
+                        .. string.format(
+                            "tooltip[%.4f,%.4f;" .. cell .. "," .. cell .. ";%s]",
+                            boffx,
+                            boffy,
+                            S(colPreviewsLabel[i])
+                        )
+                end
+            end
         end
 
         if nil ~= self.gui_contexts[playerName].current_col then
             local texture = self.palettes.full.image .. "^[sheet:256x1:" .. self.gui_contexts[playerName].current_col .. ",0"
 
+            boffx = boffx + cell + pad
             formspec = formspec
-                .. "label[" .. (pad + cell * 2) .. "," .. (endtop + 0.2) .. ";" .. S("Main:") .. "]"
+                .. "label[" .. boffx .. "," .. (endtop + 0.2) .. ";" .. S("Main:") .. "]"
                 .. string.format(
                     "image_button[%.4f,%.4f;" .. cell .. "," .. cell .. ";%s;k_col;%d;false;false]",
-                    (pad + cell * 2),
-                    (endtop + 0.3),
+                    boffx,
+                    boffy,
                     F(texture),
                     self.gui_contexts[playerName].current_col
                 )
-                .. string.format(
+
+            boffx = boffx + cell
+            formspec = formspec .. string.format(
                     "dropdown[%.4f,%.4f;" .. cell .. "," .. cell .. ";selected_col_size;0,1,2,3,4,5,6,7,8,9;%d]",
-                    --"field[%.4f,%.4f;0.4,0.5;current_col_size;;%d]",
-                    (pad + cell * 3),
-                    (endtop + 0.3),
+                    boffx,
+                    boffy,
                     (self.gui_contexts[playerName].selected_col_size or self.gui_contexts[playerName].current_col_size or 0) + 1
                 )
                 .. "tooltip[selected_col_size;" .. S("Main Color Wand Radius") .. "]"
@@ -215,21 +281,21 @@ k_colorblocks = {
 
         if nil ~= self.gui_contexts[playerName].current_col_aux then
             local texture = self.palettes.full.image .. "^[sheet:256x1:" .. self.gui_contexts[playerName].current_col_aux .. ",0"
-
+            boffx = boffx + cell + pad
             formspec = formspec
-                .. "label[" .. (pad + cell * 4) .. "," .. (endtop + 0.2) .. ";" .. S("Aux:") .. "]"
+                .. "label[" .. boffx .. "," .. (endtop + 0.2) .. ";" .. S("Aux:") .. "]"
                 .. string.format(
                     "image_button[%.4f,%.4f;" .. cell .. "," .. cell .. ";%s;k_col;%d;false;false]",
-                    (pad + cell * 4),
-                    (endtop + 0.3),
+                    boffx,
+                    boffy,
                     F(texture),
                     self.gui_contexts[playerName].current_col_aux
                 )
-                .. string.format(
+            boffx = boffx + cell
+            formspec = formspec .. string.format(
                     "dropdown[%.4f,%.4f;" .. (cell) .. "," .. cell .. ";selected_col_aux_size;0,1,2,3,4,5,6,7,8,9;%d]",
-                    -- "field[%.4f,%.4f;0.4,0.5;current_col_aux_size;;%d]",
-                    (pad + cell * 5),
-                    (endtop + 0.3),
+                    boffx,
+                    boffy,
                     (self.gui_contexts[playerName].selected_col_aux_size or self.gui_contexts[playerName].current_col_aux_size or 0) + 1
                 )
                 .. "tooltip[selected_col_aux_size;" .. S("Aux Color Wand Radius") .. "]"
@@ -274,7 +340,6 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 
         -- checks colour change to maybe prevents extra node changes
         if newCol ~= node.param2 and 0 == radius then
-            -- print(dump("set "..newCol).. dump(node))
             node.param2 = newCol
             minetest.set_node(pos, node)
             return
