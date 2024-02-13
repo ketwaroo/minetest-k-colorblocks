@@ -185,16 +185,15 @@ k_colorblocks = {
             -- preview current texture. kind of.
             local nodeDef = minetest.registered_nodes[pn.name]
 
-            -- @todo refactor bottom tiles
+            local p2 = "" .. (pn.param2 or 0)
 
-            if nil ~= pn.param2 and nil ~= self.palettes.full.colorString["" .. pn.param2] then
-                -- local texture = self.palettes.full.image .. "^[sheet:256x1:" .. pn.param2 .. ",0"
+            if nil ~= self.palettes.full.colorString[p2] then
                 local texture = string.format(
                     "%s^[multiply:%s",
                     nodeDef.tiles[1],
-                    self.palettes.full.colorString["" .. pn.param2]
+                    self.palettes.full.colorString[p2]
                 )
-
+                -- print('0 ' .. dump(texture))
                 formspec = formspec
                     .. "label[" .. boffx .. "," .. (endtop + 0.2) .. ";" .. S("Pointed:") .. "]"
                     .. string.format(
@@ -202,7 +201,7 @@ k_colorblocks = {
                         boffx,
                         boffy,
                         F(texture),
-                        pn.param2
+                        p2
                     )
                     .. string.format(
                         "tooltip[%.4f,%.4f;" .. cell .. "," .. cell .. ";%s]",
@@ -237,7 +236,7 @@ k_colorblocks = {
                         nodeDef.tiles[1],
                         self.palettes.full.colorString["" .. colsPreviews[i]]
                     )
-
+                    -- print(i .. ' ' .. dump(texturePreview))
                     formspec = formspec
                         .. string.format(
                             "image[%.4f,%.4f;" .. cell .. "," .. cell .. ";%s]",
