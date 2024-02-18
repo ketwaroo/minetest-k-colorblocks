@@ -12,6 +12,8 @@ The implementation felt a little clunky to me and so I came my with my even clun
 
 Currently supports only one palette with 15 grey values and 240 color values split into 12 hues. Each hue has 10 full saturation with scaled luminance and the remaining ten are lower saturation. It's not a palette that evenly splits all RGB colours into 256 but rather colours that are subjectively fun to paint with.
 
+Open an issue if you have suggestions or find a bug.
+
 # Features and Usage
 
 Requires creative mode to be able to access the Colouring Wand and blocks.
@@ -39,10 +41,12 @@ Requires creative mode to be able to access the Colouring Wand and blocks.
         * EXPERIMENTAL. WILL PROBABLY BREAK SOME THINGS.
         * See `k_colorblocks.iNSaNiTy` setting. Disabled by default. Overrides `k_colorblocks.autoregister_nodes` if enabled.
     * Auto registration of nodes (both safe and insanity mode) does not work with nodes which are already using `param2` and `paramtype2` for different purposes. such as rotation values for beds and stair blocks.
- *  Brush radius (new in 1.0.3)
+ * Brush radius (new in 1.0.3)
     * Main/Aux colours can have separate brush radius.
     * Brush radius attempts to colour a square in the same flat 2D plane along the punched face of targeted node. Does not wrap around uneven surfaces for now.
         * radius 0 = 1 node dot, radius 1 = 3x3 square, radius 2 = 5x5 square, radius n = (2n+1)x(2n+1) square, up to radius 9 = 19x19 square
+ * Pointed Thing Texture Preview (new in 1.0.4)
+    * Attempts to show what the target node texture will look like with selected palette. Useful in insanity mode or when using a non white base.
 
 Place stainable blocks in whatever configuration you fancy, right click with the wand to show the color picker, pick a color and click OK or just double-click on the color tile, and paint away.
 
