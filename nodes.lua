@@ -32,20 +32,20 @@ minetest.register_on_mods_loaded(function()
                 or (
                     autoRegister
                     and (
-                        -- @todo make list configurable perhaps.
+                    -- @todo make list configurable perhaps.
                         def.groups.concrete
                         or def.groups.concrete_powder
                         or string.find(key, "mcl_stairs:slab_concrete_")
                         --or string.find(key, "mcl_stairs:stair_concrete_") -- rotation issues.
                         or def.groups.wool
                         or def.groups.carpet
-                        or def.groups.glass                  -- because stained glass. seems to work even with connected glass. not with paramtype2 = "glasslikeliquidlevel"
+                        or def.groups.glass             -- because stained glass. seems to work even with connected glass. not with paramtype2 = "glasslikeliquidlevel"
                         or def.groups.hardened_clay
-                        or def.groups.glazed_terracotta      -- make patterns pop
-                        or def.groups.snowy                  -- default snow. needs testing in snowy weather.
-                        or def.groups.snow_cover             -- needs testing in snowy weather.
+                        or def.groups.glazed_terracotta -- make patterns pop
+                        or def.groups.snowy             -- default snow. needs testing in snowy weather.
+                        or def.groups.snow_cover        -- needs testing in snowy weather.
                         or def.groups.snow_top
-                        or def.groups.ice                    -- ice castles
+                        or def.groups.ice               -- ice castles
                     )
                 )
             )
@@ -99,7 +99,7 @@ end
 local glowLevel = 11
 local defaultHardness = 5
 local defaultBlastResistance = 100 -- to shoo the creepers away
-local defaultGroups = { handy = 1, pickaxey = 1, building_block = 1, }
+local defaultGroups = { cracky = 3, handy = 1, pickaxey = 1, building_block = 1, }
 
 -- must supply tiles
 local registerColorBlock = function(name, desc, overrides)
