@@ -493,6 +493,41 @@ minetest.register_tool("k_colorblocks:wand", {
     end,
 })
 
+-- crafting recipe for color wand
+local allowWandRecipe = minetest.settings:get_bool("k_colorblocks.allow_wand_recipe", false)
+if allowWandRecipe then
+    if minetest.get_modpath("mcl_dyes") then
+        minetest.register_craft({
+            output = "k_colorblocks:wand",
+            recipe = {
+                { "mcl_dyes:yellow", "mcl_dyes:green", "mcl_dyes:cyan" },
+                { "mcl_dyes:orange", "mcl_core:stick", "mcl_dyes:blue" },
+                { "mcl_dyes:red",    "mcl_core:stick", "mcl_dyes:violet" },
+            }
+        })
+    elseif minetest.get_modpath("mcl_dye") then
+        -- for minclone2 May not work, only tested in mineclonia.
+        minetest.register_craft({
+            output = "k_colorblocks:wand",
+            recipe = {
+                { "mcl_dye:yellow", "mcl_dye:green",  "mcl_dye:cyan" },
+                { "mcl_dye:orange", "mcl_core:stick", "mcl_dye:blue" }, --
+                { "mcl_dye:red",    "mcl_core:stick", "mcl_dye:violet" },
+            }
+        })
+    end
 
+    -- default game
+    if minetest.get_modpath("dye") then
+        minetest.register_craft({
+            output = "k_colorblocks:wand",
+            recipe = {
+                { "dye:yellow", "dye:green",     "dye:cyan" },
+                { "dye:orange", "default:stick", "dye:blue" },
+                { "dye:red",    "default:stick", "dye:violet" },
+            }
+        })
+    end
+end
 -- node registration
 dofile(minetest.get_modpath(minetest.get_current_modname()) .. "/nodes.lua")

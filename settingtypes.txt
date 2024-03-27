@@ -10,6 +10,9 @@ k_colorblocks.register_colored_nodes (Add extra coloured nodes) bool true
 # For example node description would say `Red` instead of `Hue 0`
 k_colorblocks.use_colorname (Show Colour names where possible) bool true
 
+# Allow crafting recipe for color wand (outside creative mode)
+k_colorblocks.allow_wand_recipe (Allow Wand Crafting) bool false
+
 # Make EVERYTHING that can be coloured, colourable.
 # !WARNING! Definitely will break things.
 # Has some limits. Does not apply to connected nodes such as double chests and beds, and a few special nodes.
