@@ -7,6 +7,39 @@ k_colorblocks.autoRegisterProtectedNodes = {}
 -- cherry blossom leaves don't wilt
 k_colorblocks.autoRegisterProtectedNodes["mcl_trees:leaves_cherry_blossom"] = 1
 
+-- @todo if not in creative mode, bug where some stacks can have param2 defined and others don't. Causes separate stacks for default param2 value.
+-- fix itemstack params. may conflict with other things.
+-- @see https://github.com/minetest/minetest/issues/7675
+-- @param itemstack ItemStack
+local fixStackPalette = function(itemstack)
+    itemstack = ItemStack(itemstack)
+    if itemstack:is_empty() then
+        return
+    end
+
+    local itemName = itemstack:get_name()
+    if nil == k_colorblocks.nodes[itemName] then
+        return
+    end
+
+    ---@type ItemStackMetaRef
+    local stackMeta = itemstack:get_meta()
+    local currentPaletteIndex = stackMeta:get("palette_index")
+
+    if nil ~= currentPaletteIndex then
+        return
+    end
+
+    local def = itemstack:get_definition()
+    local newParam2 = 0
+    if nil ~= def.place_param2 then
+        newParam2 = def.place_param2
+    end
+
+    stackMeta:set_int("palette_index", newParam2)
+    return itemstack
+end
+
 -- cache nodes with the group
 minetest.register_on_mods_loaded(function()
     local autoRegister = minetest.settings:get_bool("k_colorblocks.autoregister_nodes", false)
@@ -27,6 +60,10 @@ minetest.register_on_mods_loaded(function()
         end
         if
             nil == k_colorblocks.autoRegisterProtectedNodes[key]
+            and (
+                (nil == def.liquidtype or def.liquidtype == "none") -- not liquid
+                or nil ~= string.find(key, ":")                     -- from a mod and not built in
+            )
             and (
                 iNSaNiTy
                 or (
@@ -66,8 +103,73 @@ minetest.register_on_mods_loaded(function()
             end
         end
     end
+
+    -- fix missing palette_index on pickup
+    -- probably a terrible idea but seems to work for dropped nodes in mineclonia.
+    -- there's no on_add_item that I could find.
+    local oldAddItem = minetest.add_item
+    minetest.add_item = function(pos, item)
+        local fixedStack = fixStackPalette(item)
+        if nil ~= fixedStack then
+            return oldAddItem(pos, fixedStack)
+        else
+            return oldAddItem(pos, item)
+        end
+    end
 end)
 
+-- fix missing palette_index on pickup
+-- works in mintest game
+--minetest.register_on_item_pickup(function(itemstack, picker, pointed_thing, time_from_last_punch, ...)
+--
+--    if nil ~= itemstack then
+--        -- cancel current pickup and add manually.
+--        return picker:get_inventory():add_item("main", itemstack)
+--    end
+--end)
+
+-- -- fix missing palette_index on pickup
+-- -- occasional stragglers in the inventory.
+-- minetest.register_on_player_inventory_action(function(player, action, inventory, inventory_info)
+--     -- move: {from_list=string, to_list=string, from_index=number, to_index=number, count=number}
+--     -- put: {listname=string, index=number, stack=ItemStack}
+--     -- take: Same as put
+
+--     if "move" == action then
+--         local toStack = inventory:get_stack(inventory_info.to_list, inventory_info.to_index)
+--         local fixedToStack = fixStackPalette(toStack)
+
+--         if nil ~= fixedToStack then
+--             inventory:set_stack(inventory_info.to_list, inventory_info.to_index, fixedToStack)
+--             toStack = fixedToStack
+--         end
+
+--         local fromStack = inventory:get_stack(inventory_info.from_list, inventory_info.from_index)
+--         local fixedFromStack = fixStackPalette(fromStack)
+
+--         if nil ~= fixedFromStack then
+--             inventory:set_stack(inventory_info.from_list, inventory_info.from_index, fixedFromStack)
+--             fromStack = fixedFromStack
+--         end
+--         -- collapse the 2 stacks if matches
+--         if
+--             toStack:get_name() == fromStack:get_name()
+--             and toStack:get_meta():get("palette_index") == fromStack:get_meta():get("palette_index")
+--         then
+--             local leftover = toStack:add_item(fromStack)
+--             inventory:set_stack(inventory_info.to_list, inventory_info.to_index, toStack)
+--             inventory:set_stack(inventory_info.from_list, inventory_info.from_index, leftover)
+--         end
+--     elseif "put" == action then
+--         local toStack = inventory:get_stack(inventory_info.listname, inventory_info.index)
+--         local fixedToStack = fixStackPalette(toStack)
+--         if nil ~= fixedToStack then
+--             inventory:set_stack(inventory_info.listname, inventory_info.index, fixedToStack)
+--         end
+--     elseif "take" == action then
+--         -- tbd, doesn't seem needed.
+--     end
+-- end)
 
 -- at least one sound where possible.
 local sounds = {
